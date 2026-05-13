@@ -15,7 +15,7 @@ torchmetrics
 transformers
 accelerate
 albumentations
-chumpy
+
 cmake
 coloredlogs
 colorlog

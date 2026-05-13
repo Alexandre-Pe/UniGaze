@@ -154,14 +154,14 @@ if __name__ == "__main__":
 	write_normalized_image = args.write_normalized_image
 	write_image = args.write_image
 
-	device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+	device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 	if args.model_name is not None:
 		import unigaze
-		model = unigaze.load(args.model_name, device=device)
+		model = unigaze.load(args.model_name, device=device) # type: ignore
 		model.eval()
 	else:
-		pretrained_model_cfg=OmegaConf.load(args.model_cfg_path)['net_config']
+		pretrained_model_cfg=OmegaConf.load(args.model_cfg_path)['net_config'] # type: ignore
 		pretrained_model_cfg.params.custom_pretrained_path = None  ## since we load the gaze trained checkpoint, this MAE pre-trained checkpoint is not needed
 		model = instantiate_from_cfg( pretrained_model_cfg )
 		load_checkpoint(model, 'model_state', args.ckpt_resume)
@@ -173,9 +173,11 @@ if __name__ == "__main__":
 	distance_norm = 600  # normalized distance between eye and camera
 	roi_size = (224, 224)  # size of cropped eye image
 	try:
-		fa = face_alignment.FaceAlignment(face_alignment.LandmarksType.TWO_D, flip_input=False)
-	except:
-		fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False)
+		fa = face_alignment.FaceAlignment(face_alignment.LandmarksType.TWO_D, flip_input=False, device=device) # type: ignore
+	except Exception as e:
+		# fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False)
+		print("Error initializing face_alignment: ", e)
+		raise e
 
 	resize_factor = 0.5
 
@@ -232,7 +234,7 @@ if __name__ == "__main__":
 				image_resize = cv2.resize(image_original, dsize=None, fx=resize_factor, fy=resize_factor, interpolation = cv2.INTER_AREA)
 			
 			image_resize = cv2.cvtColor(image_resize, cv2.COLOR_BGR2RGB)
-			preds = fa.get_landmarks(image_resize)
+			preds = fa.get_landmarks_from_image(image_resize)
 
 
 			if preds is not None:
